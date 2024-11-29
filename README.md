@@ -1,1 +1,1 @@
-# cfd-gnn
+# AeroNet

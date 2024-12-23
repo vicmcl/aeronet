@@ -82,25 +82,23 @@ class CFDDataLoader:
         """Remove duplicate fluid points near surface."""
         surface_mask = data_tensor[:, -1] == 1
         fluid_mask = ~surface_mask
-
         surface_coords = data_tensor[surface_mask][:, :2]
-        fluid_coords = data_tensor[fluid_mask][:, :2]
-
-        surface_tree = KDTree(surface_coords)
-        distances, _ = surface_tree.query(fluid_coords, k=1)
-
-        unique_points_mask = distances.flatten() >= self.tolerance
-        filtered_fluid = data_tensor[fluid_mask][unique_points_mask]
-        surface_points = data_tensor[surface_mask]
-
-        print(f"{np.sum(~unique_points_mask)} surface points detected.")
-        return torch.cat([filtered_fluid, surface_points], dim=0)
+        set_surface_coords = set(tuple(coord) for coord in surface_coords.numpy())
+        fluid_data = torch.tensor(
+            [
+                data
+                for data in data_tensor[fluid_mask]
+                if data[:2] not in set_surface_coords
+            ]
+        )
+        print("Removed duplicates:", len(data_tensor) - len(fluid_data))
+        return torch.cat([fluid_data, data_tensor[surface_mask]], dim=0)
 
     def load_data(self) -> Tuple[torch.Tensor, List[str]]:
         """Load and process all CFD data."""
         # Load data
-        fluid_points, fluid_features, feature_names = self.load_fluid_data()
-        surface_points = self.load_surface_data()
+        fluid_points, fluid_features, feature_names = self._load_fluid_data()
+        surface_points = self._load_surface_data()
 
         # Combine points and features
         points, features, point_type = self._combine_points_and_features(

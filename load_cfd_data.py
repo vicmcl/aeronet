@@ -83,10 +83,10 @@ class CFDDataLoader:
         surface_mask = data_tensor[:, -1] == 1
         fluid_mask = ~surface_mask
         surface_coords = data_tensor[surface_mask][:, :2]
-        set_surface_coords = set(tuple(coord) for coord in surface_coords.numpy())
+        set_surface_coords = set(tuple(coord) for coord in surface_coords)
         fluid_data = torch.tensor(
             [
-                data
+                data.tolist()
                 for data in data_tensor[fluid_mask]
                 if data[:2] not in set_surface_coords
             ]
